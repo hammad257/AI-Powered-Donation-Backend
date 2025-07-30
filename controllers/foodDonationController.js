@@ -3,9 +3,9 @@ const FoodDonation = require('../models/foodDonation');
 // 1. 👨‍🍳 Donor creates a food donation
 exports.createFoodDonation = async (req, res) => {
   try {
-    const { foodType, quantity, location } = req.body;
+    const { foodType, quantity, location, lat, lng } = req.body;
 
-    if (!foodType || !quantity || !location) {
+    if (!foodType || !quantity || !location || lat === undefined || lng === undefined) {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
@@ -13,6 +13,8 @@ exports.createFoodDonation = async (req, res) => {
       foodType,
       quantity,
       location,
+      lat,
+      lng,
       donor: req.user.id
     });
 

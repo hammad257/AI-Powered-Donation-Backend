@@ -7,7 +7,7 @@ const { createDonation, getAllDonations, updateDonationStatus } = require('../co
 router.post('/donate', verifyToken, verifyRole(['donor']), createDonation);
 
 // 🧑‍💼 Admin views all donations
-router.get('/all', verifyToken, verifyRole(['admin']), getAllDonations);
+router.get('/all', verifyToken, verifyRole(['admin','donor']), getAllDonations);
 
 // 🧑‍💼 Admin updates status of a donation
 router.put(

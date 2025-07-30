@@ -47,3 +47,36 @@ exports.loginUser = async (req, res) => {
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+exports.socialLogin = async (req, res) => {
+  try {
+    const { name, email, picture } = req.body;
+
+    if (!email) return res.status(400).json({ message: 'Email is required' });
+
+    // Check if user exists
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Create a new user
+      user = new User({
+        name,
+        email,
+        profilePic: picture,
+        password: null, // no password since it's OAuth
+        role: 'donor',  // default role or dynamic
+      });
+      await user.save();
+    }
+
+    // Generate JWT
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '30d',
+    });
+
+    res.json({ token, user });
+  } catch (err) {
+    console.error('Social Login Error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};

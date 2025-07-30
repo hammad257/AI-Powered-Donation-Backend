@@ -14,6 +14,8 @@ const foodDonationSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    lat: { type: Number, required: true },      // new
+    lng: { type: Number, required: true },      // new
     status: {
       type: String,
       enum: ['pending', 'picked', 'delivered'],
