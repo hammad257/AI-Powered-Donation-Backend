@@ -3,13 +3,28 @@ const FoodDonation = require('../models/foodDonation');
 // 🔍 Get all unassigned food donations (status: 'pending')
 exports.getAvailableDonations = async (req, res) => {
   try {
-    const donations = await FoodDonation.find({ status: 'pending' }).populate('donor', 'name email');
-    res.json(donations);
+    const donations = await FoodDonation.find({
+      status: { $in: ['pending', 'picked'] } // show pending + picked for current volunteer
+    })
+      .populate('donor', 'name email')
+      .lean();
+
+    // Add custom flag for frontend whether current volunteer accepted this donation
+    const result = donations.map((donation) => {
+      return {
+        ...donation,
+        isAcceptedByCurrentUser:
+          donation.pickedBy && donation.pickedBy.toString() === req.user.id,
+      };
+    });
+
+    res.json(result);
   } catch (err) {
     console.error('getAvailableDonations Error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // 📦 Get pickups accepted by the current volunteer
 exports.getMyPickups = async (req, res) => {
@@ -82,6 +97,29 @@ exports.getMyDeliveries = async (req, res) => {
     res.json(deliveries);
   } catch (err) {
     console.error('getMyDeliveries Error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+// POST /volunteer/food/cancel-accept/:id
+exports.cancelAcceptDonation = async (req, res) => {
+  try {
+    const donation = await FoodDonation.findById(req.params.id);
+    if (!donation) return res.status(404).json({ message: 'Donation not found' });
+
+    // Only the volunteer who accepted can cancel
+    if (!donation.pickedBy || donation.pickedBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to cancel this pickup' });
+    }
+
+    // Reset status and pickedBy
+    donation.status = 'pending';
+    donation.pickedBy = null;
+    await donation.save();
+
+    res.json({ message: 'Pickup acceptance canceled', donation });
+  } catch (err) {
+    console.error('cancelAcceptDonation Error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };

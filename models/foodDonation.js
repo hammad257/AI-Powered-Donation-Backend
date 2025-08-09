@@ -6,6 +6,10 @@ const foodDonationSchema = new mongoose.Schema(
       type: String,
       required: true
     },
+    foodDescription: {
+      type: String,
+      required: true
+    },
     quantity: {
       type: String,
       required: true

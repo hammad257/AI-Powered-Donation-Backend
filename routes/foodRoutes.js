@@ -6,7 +6,9 @@ const {
   getPendingFood,
   acceptFoodDonation,
   markAsDelivered,
-  getMyFoodDonations
+  getMyFoodDonations,
+  updateFoodDonation,
+  deleteFoodDonation
 } = require('../controllers/foodDonationController');
 const foodDonation = require('../models/foodDonation');
 
@@ -36,5 +38,10 @@ router.put('/accept/:id', verifyToken, verifyRole(['volunteer']), acceptFoodDona
 router.put('/delivered/:id', verifyToken, verifyRole(['volunteer', 'admin']), markAsDelivered);
 
 router.get('/donor/my-donations', verifyToken, verifyRole(['donor']), getMyFoodDonations);
+
+router.put('/:id', verifyToken, verifyRole(['donor']), updateFoodDonation);
+
+// Delete donation
+router.delete('/:id', verifyToken, verifyRole(['donor']), deleteFoodDonation);
 
 module.exports = router;

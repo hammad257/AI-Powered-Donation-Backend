@@ -7,7 +7,8 @@ const {
   acceptDonation,
   markAsDelivered,
   getMyPickups,
-  getMyDeliveries
+  getMyDeliveries,
+  cancelAcceptDonation
 } = require('../controllers//volunteerController');
 
 router.use(verifyToken, verifyRole(['volunteer']));
@@ -25,6 +26,8 @@ router.post('/food/delivered/:id', markAsDelivered);
 router.get('/food/my-pickups', getMyPickups);
 
 router.get('/volunteer/my-deliveries',getMyDeliveries);
+
+router.post('/food/cancel-accept/:id', cancelAcceptDonation);
 
 
 module.exports = router;
