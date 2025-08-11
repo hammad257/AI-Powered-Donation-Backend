@@ -48,9 +48,10 @@ exports.loginUser = async (req, res) => {
   }
 };
 
+// ✅ Updated Social Login
 exports.socialLogin = async (req, res) => {
   try {
-    const { name, email, picture } = req.body;
+    const { name, email, picture, role } = req.body;
 
     if (!email) return res.status(400).json({ message: 'Email is required' });
 
@@ -58,13 +59,17 @@ exports.socialLogin = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (!user) {
-      // Create a new user
+      if (!role) {
+        return res.status(400).json({ message: 'Role is required for new users' });
+      }
+
+      // Create a new user with chosen role
       user = new User({
         name,
         email,
         profilePic: picture,
-        password: null, // no password since it's OAuth
-        role: 'donor',  // default role or dynamic
+        password: null, // OAuth login
+        role, // 👈 dynamic role instead of hard-coded donor
       });
       await user.save();
     }

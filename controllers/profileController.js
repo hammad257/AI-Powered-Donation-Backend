@@ -1,4 +1,6 @@
 const User = require('../models/User');
+const fs = require('fs');
+const path = require('path');
 
 
 exports.getMyProfile = async (req, res) => {
@@ -57,6 +59,34 @@ exports.uploadProfilePhoto = async (req, res) => {
       res.json({ message: 'Profile photo updated', profilePic: user.profilePic });
     } catch (err) {
       console.error('uploadProfilePhoto Error:', err);
+      res.status(500).json({ message: 'Server error' });
+    }
+  };
+  
+  exports.removeProfilePhoto = async (req, res) => {
+    try {
+      const user = await User.findById(req.user.id);
+      if (!user) return res.status(404).json({ message: 'User not found' });
+  
+      // Check if user has a profilePic set
+      if (user.profilePic) {
+        const filePath = path.join(__dirname, '..', user.profilePic);
+  
+        // Delete the file from server
+        fs.unlink(filePath, (err) => {
+          if (err) {
+            console.error('Error deleting profile picture:', err);
+          }
+        });
+  
+        // Remove from DB
+        user.profilePic = '';
+        await user.save();
+      }
+  
+      res.json({ message: 'Profile picture removed from DB and server' });
+    } catch (err) {
+      console.error('removeProfilePhoto Error:', err);
       res.status(500).json({ message: 'Server error' });
     }
   };

@@ -65,3 +65,38 @@ exports.updateDonationStatus = async (req, res) => {
     }
   };
   
+// ✏️ Donor updates their own donation
+exports.editDonation = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { amount, purpose } = req.body;
+
+    // Find the donation
+    const donation = await MoneyDonation.findById(id);
+
+    if (!donation) {
+      return res.status(404).json({ message: 'Donation not found' });
+    }
+
+    // Check if current user is the donor
+    if (donation.donatedBy.toString() !== req.user.id) {
+      return res.status(403).json({ message: 'Not authorized to edit this donation' });
+    }
+
+    // Allow edit only if donation is still pending
+    if (donation.status !== 'pending') {
+      return res.status(400).json({ message: 'Cannot edit donation after approval/rejection' });
+    }
+
+    // Update fields
+    donation.amount = amount || donation.amount;
+    donation.purpose = purpose || donation.purpose;
+
+    await donation.save();
+
+    res.json({ message: 'Donation updated successfully', donation });
+  } catch (err) {
+    console.error('✏️ Edit Donation Error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
