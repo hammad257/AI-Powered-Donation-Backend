@@ -30,6 +30,10 @@ exports.loginUser = async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(401).json({ message: 'Invalid email or password' });
 
+    if (user.status === 'blocked') {
+      return res.status(200).json({ message: 'Your account is blocked. Contact admin.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(401).json({ message: 'Invalid email or password' });
 
@@ -48,40 +52,64 @@ exports.loginUser = async (req, res) => {
   }
 };
 
-// ✅ Updated Social Login
+// ✅ Updated Social Login with Role Check
 exports.socialLogin = async (req, res) => {
   try {
     const { name, email, picture, role } = req.body;
 
-    if (!email) return res.status(400).json({ message: 'Email is required' });
+    if (!email) {
+      return res.status(400).json({ message: 'Email is required' });
+    }
 
-    // Check if user exists
+    // Find user
     let user = await User.findOne({ email });
 
     if (!user) {
+      // New user must provide role
       if (!role) {
         return res.status(400).json({ message: 'Role is required for new users' });
       }
 
-      // Create a new user with chosen role
       user = new User({
         name,
         email,
         profilePic: picture,
-        password: null, // OAuth login
-        role, // 👈 dynamic role instead of hard-coded donor
+        password: null, // Google user
+        role,
       });
       await user.save();
+    } else {
+      // ✅ Check role mismatch
+      if (user.role !== role) {
+        return res.status(200).json({
+          message: `You are already registered as ${user.role}. Please use another Google account to register as ${role}.`
+        });
+      }
     }
 
-    // Generate JWT
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '30d',
-    });
+    // ✅ Always include role in JWT
+    const token = jwt.sign(
+      { id: user._id, role: user.role },
+      process.env.JWT_SECRET,
+      { expiresIn: '30d' }
+    );
 
-    res.json({ token, user });
+    res.json({
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        profilePic: user.profilePic,
+        phone: user.phone,
+        address: user.address,
+      }
+    });
   } catch (err) {
     console.error('Social Login Error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
+

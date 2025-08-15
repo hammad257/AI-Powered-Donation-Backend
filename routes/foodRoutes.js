@@ -11,6 +11,7 @@ const {
   deleteFoodDonation
 } = require('../controllers/foodDonationController');
 const foodDonation = require('../models/foodDonation');
+const upload = require('../middlewares/uploadMiddleware');
 
 // ✅ Admin views all food donations
 router.get('/all', verifyToken, verifyRole(['admin']), async (req, res) => {
@@ -26,7 +27,7 @@ router.get('/all', verifyToken, verifyRole(['admin']), async (req, res) => {
 });
 
 // 1. Donor adds food
-router.post('/donate', verifyToken, verifyRole(['donor']), createFoodDonation);
+router.post('/donate', verifyToken, verifyRole(['donor']), upload.single('image'), createFoodDonation);
 
 // 2. Volunteer gets pending food donations
 router.get('/pending', verifyToken, verifyRole(['volunteer']), getPendingFood);
@@ -39,7 +40,7 @@ router.put('/delivered/:id', verifyToken, verifyRole(['volunteer', 'admin']), ma
 
 router.get('/donor/my-donations', verifyToken, verifyRole(['donor']), getMyFoodDonations);
 
-router.put('/:id', verifyToken, verifyRole(['donor']), updateFoodDonation);
+router.put('/:id', verifyToken, verifyRole(['donor']),upload.single('image'), updateFoodDonation);
 
 // Delete donation
 router.delete('/:id', verifyToken, verifyRole(['donor']), deleteFoodDonation);

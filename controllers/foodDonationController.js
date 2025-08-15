@@ -1,31 +1,6 @@
 const FoodDonation = require('../models/foodDonation');
 
-// 1. 👨‍🍳 Donor creates a food donation
-exports.createFoodDonation = async (req, res) => {
-  try {
-    const { foodType,foodDescription, quantity, location, lat, lng } = req.body;
 
-    if (!foodType || !foodDescription || !quantity || !location || lat === undefined || lng === undefined) {
-      return res.status(400).json({ message: 'All fields are required' });
-    }
-
-    const donation = new FoodDonation({
-      foodType,
-      foodDescription,
-      quantity,
-      location,
-      lat,
-      lng,
-      donor: req.user.id
-    });
-
-    await donation.save();
-    res.status(201).json({ message: 'Food donation submitted successfully', donation });
-  } catch (err) {
-    console.error('🍱 createFoodDonation Error:', err);
-    res.status(500).json({ message: 'Server error' });
-  }
-};
 
 // 2. 👷 Volunteer gets all pending food donations
 exports.getPendingFood = async (req, res) => {
@@ -98,44 +73,63 @@ exports.getMyFoodDonations = async (req, res) => {
   }
 };
 
-// 6. ✏️ Donor edits a food donation
+exports.createFoodDonation = async (req, res) => {
+  try {
+    const { foodType, foodDescription, quantity, location, lat, lng } = req.body;
+    if (!foodType || !foodDescription || !quantity || !location || lat === undefined || lng === undefined) {
+      return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    const donation = new FoodDonation({
+      foodType,
+      foodDescription,
+      quantity,
+      location,
+      lat,
+      lng,
+      image: req.file ? `/uploads/food/${req.file.filename}` : null, // store path
+      donor: req.user.id
+    });
+
+    await donation.save();
+    res.status(201).json({ message: 'Food donation submitted successfully', donation });
+  } catch (err) {
+    console.error('🍱 createFoodDonation Error:', err);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 exports.updateFoodDonation = async (req, res) => {
   try {
     const { id } = req.params;
-    const { foodType,foodDescription, quantity, location, lat, lng } = req.body;
+    const { foodType, foodDescription, quantity, location, lat, lng } = req.body;
 
     const donation = await FoodDonation.findById(id);
+    if (!donation) return res.status(404).json({ message: 'Donation not found' });
 
-    if (!donation) {
-      return res.status(404).json({ message: 'Donation not found' });
-    }
-
-    // Ensure the logged-in user is the donor
     if (donation.donor.toString() !== req.user.id) {
       return res.status(403).json({ message: 'You are not allowed to edit this donation' });
     }
-
-    // Allow edit only if status is still pending
     if (donation.status !== 'pending') {
       return res.status(400).json({ message: 'You can only edit pending donations' });
     }
 
-    // Update fields
     if (foodType) donation.foodType = foodType;
     if (foodDescription) donation.foodDescription = foodDescription;
     if (quantity) donation.quantity = quantity;
     if (location) donation.location = location;
     if (lat !== undefined) donation.lat = lat;
     if (lng !== undefined) donation.lng = lng;
+    if (req.file) donation.image = `/uploads/food/${req.file.filename}`;
 
     await donation.save();
-
     res.json({ message: 'Donation updated successfully', donation });
   } catch (err) {
     console.error('🍱 updateFoodDonation Error:', err);
     res.status(500).json({ message: 'Server error' });
   }
 };
+
 
 // 🗑 Donor deletes a food donation
 exports.deleteFoodDonation = async (req, res) => {

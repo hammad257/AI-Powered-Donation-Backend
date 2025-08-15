@@ -15,6 +15,11 @@ const userSchema = new mongoose.Schema({
   },
   phone:{type: String, default:''},
   address:{type: String, default:''},
+  status: { 
+    type: String, 
+    enum: ['active', 'blocked'], 
+    default: 'active' 
+  },
 }, { timestamps: true });
 
 module.exports = mongoose.model('User', userSchema);
