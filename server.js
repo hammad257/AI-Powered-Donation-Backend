@@ -21,6 +21,10 @@ app.use('/api/food', require('./routes/foodRoutes'));
 app.use('/api/volunteer', require('./routes/volunteerRoutes'));
 app.use('/api/messages', require('./routes/messageRoutes'));
 app.use('/api/profile', require('./routes/profileRoutes'));
+app.use('/api/dropoff', require('./routes/dropoffRoutes'));
+
+// const PORT = process.env.PORT || 5000;
+// app.listen(PORT, () => console.log(`✅ Server running on port ${PORT}`));
 
 // Export app for Vercel
 module.exports = app;
