@@ -4,14 +4,12 @@ const { verifyToken, verifyRole } = require('../middlewares/authMiddleware');
 const NeedyPerson = require('../models/needyPerson');
 const upload = require('../middlewares/uploadMiddleware');
 
-// Allow only needy role
-router.use(verifyToken, verifyRole(['needy']));
 
-// POST /api/needy/request
+
+// POST /api/needy/request (public route)
 router.post('/request', upload.array('documents', 5), async (req, res) => {
   try {
     const { name, email, phone, reason } = req.body;
-
     const documentPaths = req.files.map(file => file.filename);
 
     const newRequest = new NeedyPerson({
@@ -20,7 +18,7 @@ router.post('/request', upload.array('documents', 5), async (req, res) => {
       phone,
       reason,
       documents: documentPaths,
-      submittedBy: req.user.id,
+      submittedBy: null, // no user since it's guest
     });
 
     await newRequest.save();
