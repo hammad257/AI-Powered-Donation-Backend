@@ -16,15 +16,23 @@ exports.getAllNeedy = async (req, res) => {
 
     const enhancedPeople = people.map(person => ({
       ...person.toObject(),
-      documents: person.documents.map(doc => `${req.protocol}://${req.get('host')}/uploads/${doc}`)
+      documents: person.documents.map(doc => {
+        // If already a full URL (http/https), return as is
+        if (doc.startsWith("http://") || doc.startsWith("https://")) {
+          return doc;
+        }
+        // Otherwise, serve from local uploads
+        return `${req.protocol}://${req.get("host")}/uploads/${doc}`;
+      })
     }));
 
     res.json(enhancedPeople);
   } catch (err) {
-    console.error('🔥 getAllNeedy Error:', err);
-    res.status(500).json({ message: 'Server error' });
+    console.error("🔥 getAllNeedy Error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 };
+
 
 // ✅ Flexible status update (approve or reject)
 exports.updateNeedyStatus = async (req, res) => {
