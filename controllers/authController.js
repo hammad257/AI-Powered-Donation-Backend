@@ -165,3 +165,58 @@ exports.resetPassword = async (req, res) => {
     res.status(500).json({ message: "Server error" });
   }
 };
+
+exports.changePassword = async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    console.log(req.body);
+    
+
+    if (!oldPassword || !newPassword) {
+      return res.status(400).json({ message: "Old and new passwords are required" });
+    }
+
+    const userId = req.user.id; // coming from verifyToken middleware
+    const user = await User.findById(userId);
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // 🔑 Check if old password matches
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ message: "Old password is incorrect" });
+    }
+
+    // 🔑 Hash and set new password
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    await user.save();
+
+    res.json({ message: "Password changed successfully" });
+  } catch (err) {
+    console.error("Change Password Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+// controllers/userController.js
+exports.updateVisibility = async (req, res) => {
+  try {
+    const { emailVisible, phoneVisible } = req.body;
+    const userId = req.user.id;
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { emailVisible, phoneVisible },
+      { new: true }
+    ).select("-password"); // exclude password
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ message: "Visibility updated", user });
+  } catch (err) {
+    console.error("Visibility Update Error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+};

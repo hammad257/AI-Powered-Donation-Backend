@@ -5,6 +5,8 @@ const userSchema = new mongoose.Schema({
   name: String,
   email: { type: String, unique: true },
   password: String,
+  emailVisible: { type: Boolean, default: false },  // false = private
+  phoneVisible: { type: Boolean, default: false },
   role: {
     type: String,
     enum: ['admin', 'volunteer', 'donor', 'needy'],
